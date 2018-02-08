@@ -13,7 +13,10 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 
-#include "SparkFunBME280.h"
+#include "PubSubClient.h"
+
+//#include "SparkFunBME280.h"
+#include "SparkFunHTU21D.h"
 #include "Wire.h"
 
 #include <ArduinoJson.h>
@@ -47,7 +50,7 @@ char wificonfig[512];
 IPAddress ip, gateway, subnet;
 uint8_t MAC_array[6];
 char MAC_char[18];
-BME280 mySensor;
+HTU21D mySensor;
 ESP8266WebServer server(80);
 
 char serverIndex[512] = "<h1>TempLogger Config</h1><ul><li><a href='params'>Config "
@@ -124,14 +127,14 @@ void setup()
 
         Serial.println("Setting up I2C");
         Wire.begin(4, 5);
-        mySensor.settings.commInterface = I2C_MODE;
-        mySensor.settings.I2CAddress = 0x76;
-        mySensor.settings.runMode = 3;
-        mySensor.settings.tStandby = 0;
-        mySensor.settings.filter = 0;
-        mySensor.settings.tempOverSample = 1;
-        mySensor.settings.humidOverSample = 1;
-        mySensor.settings.pressOverSample = 1;
+        //mySensor.settings.commInterface = I2C_MODE;
+        //mySensor.settings.I2CAddress = 0x76;
+        //mySensor.settings.runMode = 3;
+        //mySensor.settings.tStandby = 0;
+        //mySensor.settings.filter = 0;
+        //mySensor.settings.tempOverSample = 1;
+        //mySensor.settings.humidOverSample = 1;
+        //mySensor.settings.pressOverSample = 1;
         delay(10);
         Serial.println("Start I2C sensor");
         mySensor.begin();
@@ -153,12 +156,11 @@ void loop()
   server.handleClient();
       // Read sensor data
     if (configOK) {
-        float humidity, temp, pression, voltage;
+        float humidity, temp, voltage;
         for (int i = 0; i < 3; ++i) {
             Serial.println(String(temp));
-            humidity = mySensor.readFloatHumidity();
-            temp = mySensor.readTempC();
-            pression = mySensor.readFloatPressure();
+            humidity = mySensor.readHumidity();
+            temp = mySensor.readTemperature();
             voltage = readADC_avg();
             printf("Temperature: %d, humidity: %d and voltage: %d\n", temp,humidity,voltage);
             if (String(temp) != "nan") {
