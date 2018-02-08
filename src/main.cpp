@@ -1,12 +1,9 @@
-/**
+ /**
  * TempLogger
  *
  *  Created on: 04.02.2018
  *  Based on ESPIOT work
  *  VERSION 0.01
- *
- *  CHANGELOG
- *  2018-02-04 Initial - removed French
  **/
 #include <stdint.h>
 #include <HardwareSerial.h>
