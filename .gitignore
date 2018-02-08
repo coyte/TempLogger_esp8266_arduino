@@ -1,0 +1,13 @@
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/settings.json
+lib/readme.txt
+.project
+.DS_Store
+.cproject
+.travis.yml
+platformio.ini
