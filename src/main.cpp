@@ -15,9 +15,9 @@
 
 #include "PubSubClient.h"
 
-//#include "SparkFunBME280.h"
-#include "SparkFunHTU21D.h"
-#include "Wire.h"
+
+//#include "SparkFunHTU21D.h"
+#include "Adafruit_HTU21DF.h"
 
 #include <ArduinoJson.h>
 #include "FS.h"
@@ -50,8 +50,17 @@ char wificonfig[512];
 IPAddress ip, gateway, subnet;
 uint8_t MAC_array[6];
 char MAC_char[18];
-HTU21D mySensor;
+Adafruit_HTU21DF mySensor;
 ESP8266WebServer server(80);
+//mqtt variables
+const char* mqttServer = "192.168.15.25";
+const int mqttPort = 1883;
+const char* mqttUser = "slave";
+const char* mqttPassword = "mypass";
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+ 
 
 char serverIndex[512] = "<h1>TempLogger Config</h1><ul><li><a href='params'>Config "
                         "TempLogger</a></li><li><a href='update'>Flash "
@@ -125,8 +134,28 @@ void setup()
             sprintf(MAC_char, "%s%02x:", MAC_char, MAC_array[i]);
         }
 
+
+        //Connecting to MQTT server
+        client.setServer(mqttServer, mqttPort);
+        //client.setCallback(callback);
+        while (!client.connected()) {
+            Serial.println("Connecting to MQTT...");
+            if (client.connect("ESP8266Client", mqttUser, mqttPassword )) {
+                Serial.println("connected");  
+            } else {
+                Serial.print("failed with state ");
+                Serial.print(client.state());
+                delay(2000);
+ 
+            }
+        }
+
+        //Test mqtt
+        //client.publish("esp/test", "Hello from ESP8266");
+
+
         Serial.println("Setting up I2C");
-        Wire.begin(4, 5);
+        Wire.begin(2,0);
         //mySensor.settings.commInterface = I2C_MODE;
         //mySensor.settings.I2CAddress = 0x76;
         //mySensor.settings.runMode = 3;
@@ -137,7 +166,10 @@ void setup()
         //mySensor.settings.pressOverSample = 1;
         delay(10);
         Serial.println("Start I2C sensor");
-        mySensor.begin();
+        if (!mySensor.begin()) {
+            Serial.println("Couldn't find sensor!");
+            while (1);
+            }        
     }
     else {
         Serial.println("Config not ok, starting AP mode");
@@ -153,28 +185,21 @@ void setup()
 
 void loop()
 {
-  server.handleClient();
-      // Read sensor data
-    if (configOK) {
-        float humidity, temp, voltage;
-        for (int i = 0; i < 3; ++i) {
-            Serial.println(String(temp));
-            humidity = mySensor.readHumidity();
-            temp = mySensor.readTemperature();
-            voltage = readADC_avg();
-            printf("Temperature: %d, humidity: %d and voltage: %d\n", temp,humidity,voltage);
-            if (String(temp) != "nan") {
-                break;
-            }
-            delay(2);
-        }
-PowerDown();
-    }
+    char strtemp[6];
+    //Serial.print("Temp: "); Serial.print(mySensor.readTemperature());
+    //Serial.print("\t\tHum: "); Serial.println(mySensor.readHumidity());
+    server.handleClient();
+    // Read sensor data
+    float temp=0;
+    temp = mySensor.readTemperature();
+    //strtemp = "Temperatuur: " + String(temp);
+    dtostrf(temp,3,1,strtemp);
+    printf("Temperature: %s\n", strtemp);
+    client.publish("esp/test", strtemp);
+    printf("Pushed to MQTT, now waiting for 5s\n");
+    delay(5000);
+//PowerDown();
 }
-
-
-
-
 
 
 
