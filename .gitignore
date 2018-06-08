@@ -11,3 +11,4 @@ lib/readme.txt
 .cproject
 .travis.yml
 platformio.ini
+.vscode/.browse.c_cpp.db*
